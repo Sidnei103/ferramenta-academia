@@ -35,7 +35,7 @@ export function Header() {
   const handleLogout = async () => {
     try {
       await logoutUser()
-      router.push("/login")
+      router.push("/auth/login") // Atualizado o caminho do redirecionamento
       toast({
         title: "Logout realizado com sucesso",
         description: "Você foi desconectado da sua conta.",

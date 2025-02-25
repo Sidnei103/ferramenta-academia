@@ -108,7 +108,7 @@ function Dashboard() {
   const handleLogout = useCallback(async () => {
     try {
       await logoutUser()
-      router.push("/login")
+      router.push("/auth/login")
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       toast({

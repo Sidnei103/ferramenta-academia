@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { onAuthStateChange } from "@/lib/firebaseAuth"
@@ -16,7 +15,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true)
       } else {
         setIsAuthenticated(false)
-        router.push("/login")
+        router.push("/auth/login") // Atualizado o caminho do redirecionamento
       }
     })
 
