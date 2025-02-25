@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
-import { db } from "../../firebaseConfig"
+import { db } from "@/lib/firebaseConfig"
 
 // Define the tasks for the planning stage
 const planningTasks = [
