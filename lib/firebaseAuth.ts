@@ -1,27 +1,11 @@
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  type User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
+  type User,
 } from "firebase/auth"
 import { auth } from "./firebaseConfig"
-
-const googleProvider = new GoogleAuthProvider()
-googleProvider.setCustomParameters({ prompt: "select_account" })
-
-export const signInWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider)
-    console.log("Usuário logado:", result.user)
-    return result.user
-  } catch (error) {
-    console.error("Erro no login com Google:", error)
-    throw error
-  }
-}
 
 export const signInWithEmail = async (email: string, password: string) => {
   try {
@@ -56,7 +40,6 @@ export const getCurrentUser = (): User | null => {
   return auth.currentUser
 }
 
-// Função para observar mudanças no estado de autenticação
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback)
 }

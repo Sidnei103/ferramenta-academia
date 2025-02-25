@@ -108,7 +108,7 @@ function Dashboard() {
   const handleLogout = useCallback(async () => {
     try {
       await logoutUser()
-      router.push("/auth/login")
+      router.push("/login") // Changed from "/auth/login" to "/login"
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       toast({
@@ -298,4 +298,3 @@ export default function DashboardWithQueryClient() {
     </QueryClientProvider>
   )
 }
-
