@@ -26,7 +26,38 @@ const withRetry = async (operation: () => Promise<any>, retries = MAX_RETRIES) =
 }
 
 export const signInWithEmail = async (email: string, password: string) => {
-  return withRetry(() => signInWithEmailAndPassword(auth, email, password))
+  try {
+    const result = await withRetry(() => signInWithEmailAndPassword(auth, email, password))
+
+    // Após login bem-sucedido, obter o token
+    const token = await result.user.getIdToken()
+    console.log("Token obtido com sucesso")
+
+    // Configurar o cookie de sessão
+    try {
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Falha ao configurar sessão")
+      }
+
+      console.log("Cookie de sessão configurado com sucesso")
+    } catch (error) {
+      console.error("Erro ao configurar sessão:", error)
+      throw error
+    }
+
+    return result
+  } catch (error) {
+    console.error("Erro no login:", error)
+    throw error
+  }
 }
 
 export const createUserWithEmail = async (email: string, password: string) => {
