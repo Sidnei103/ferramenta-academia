@@ -99,23 +99,16 @@ const dynamicScenarios = [
   },
 ]
 
-// Primeiro, defina a interface para uma questão personalizada
-interface CustomQuestion {
-  id: string;
-  question: string;
-  userId?: string;
-}
-
 export default function HiringInterview() {
   // Adicione estes estados no início do componente HiringInterview
-  const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([])
+  const [customQuestions, setCustomQuestions] = useState([])
   const [newQuestion, setNewQuestion] = useState("")
-  const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
+  const [editingQuestion, setEditingQuestion] = useState(null)
 
   const [candidateInfo, setCandidateInfo] = useState({ nome: "", email: "", telefone: "" })
   const [candidateNotes, setCandidateNotes] = useState("")
   const [rolePlayCompleted, setRolePlayCompleted] = useState(false)
-  const [questionResponses, setQuestionResponses] = useState<Record<string, string>>({})
+  const [questionResponses, setQuestionResponses] = useState({})
   const [isEditing, setIsEditing] = useState(false)
   const [originalData, setOriginalData] = useState({})
   const [hasChanges, setHasChanges] = useState(false)
@@ -165,10 +158,7 @@ export default function HiringInterview() {
     const db = getFirestore(app)
     const q = query(collection(db, "customQuestions"), where("userId", "==", user.uid))
     const querySnapshot = await getDocs(q)
-    const loadedQuestions = querySnapshot.docs.map((doc) => ({ 
-      id: doc.id,
-      ...doc.data()
-    })) as CustomQuestion[]
+    const loadedQuestions = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     setCustomQuestions(loadedQuestions)
   }, [auth.currentUser])
 
@@ -191,14 +181,14 @@ export default function HiringInterview() {
     setNewQuestion("")
   }
 
-  const updateCustomQuestion = async (id: string, updatedQuestion: string) => {
+  const updateCustomQuestion = async (id, updatedQuestion) => {
     const db = getFirestore(app)
     await updateDoc(doc(db, "customQuestions", id), { question: updatedQuestion })
     setCustomQuestions(customQuestions.map((q) => (q.id === id ? { ...q, question: updatedQuestion } : q)))
     setEditingQuestion(null)
   }
 
-  const deleteCustomQuestion = async (id: string) => {
+  const deleteCustomQuestion = async (id) => {
     const db = getFirestore(app)
     await deleteDoc(doc(db, "customQuestions", id))
     setCustomQuestions(customQuestions.filter((q) => q.id !== id))
@@ -487,7 +477,8 @@ export default function HiringInterview() {
                               setCustomQuestions(
                                 customQuestions.map((cq) =>
                                   cq.id === q.id ? { ...cq, question: e.target.value } : cq,
-                              ))
+                                ),
+                              )
                             }
                             className="w-full"
                           />

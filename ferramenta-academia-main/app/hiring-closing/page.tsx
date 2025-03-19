@@ -16,26 +16,6 @@ import { getAuth } from "firebase/auth"
 
 type CandidateStatus = "approved" | "rejected" | "pending"
 
-// Primeiro, defina a interface para o tempData
-interface TempData {
-  nome?: string
-  email?: string
-  telefone?: string
-  data_entrevista?: string | { seconds: number; nanoseconds: number }
-  perguntas_anotacoes?: Record<string, string | undefined>
-  candidato_anotacoes?: string
-  role_play_realizado?: string
-  role_play_feedback?: string
-  recrutadorEmail?: string
-  createdAt?: { seconds: number; nanoseconds: number }
-  updatedAt?: { seconds: number; nanoseconds: number }
-  status?: CandidateStatus
-  rejectionFeedback?: string
-  internalNotes?: string
-  offerLetter?: string
-  rejectionEmail?: string
-}
-
 export default function HiringClosing() {
   const [candidateStatus, setCandidateStatus] = useState<CandidateStatus>("pending")
   const [rejectionFeedback, setRejectionFeedback] = useState("")
@@ -44,7 +24,7 @@ export default function HiringClosing() {
   const [rejectionEmail, setRejectionEmail] = useState("")
   const [originalData, setOriginalData] = useState({})
   const [hasChanges, setHasChanges] = useState(false)
-  const [tempData, setTempData] = useState<TempData>({})
+  const [tempData, setTempData] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -112,22 +92,15 @@ export default function HiringClosing() {
         internalNotes,
         offerLetter,
         rejectionEmail,
-        updatedAt: {
-          seconds: Math.floor(Date.now() / 1000),
-          nanoseconds: 0
-        }
+        updatedAt: new Date(),
+        recrutadorEmail: user.email, // Importante: adicionar o email do recrutador
+        createdAt: isEditing ? tempData.createdAt : new Date(), // Mantém a data original se estiver editando
       }
 
       let docRef
       if (isEditing && editId) {
         docRef = doc(db, "candidatos", editId)
-        await updateDoc(docRef, {
-          ...candidateData,
-          updatedAt: {
-            seconds: Math.floor(Date.now() / 1000),
-            nanoseconds: 0
-          }
-        })
+        await updateDoc(docRef, candidateData)
       } else {
         docRef = await addDoc(collection(db, "candidatos"), candidateData)
       }
@@ -216,11 +189,11 @@ Atenciosamente,
   const getStatusBadge = () => {
     switch (candidateStatus) {
       case "approved":
-        return <Badge variant="secondary">Aprovado</Badge>
+        return <Badge variant="success">Aprovado</Badge>
       case "rejected":
         return <Badge variant="destructive">Reprovado</Badge>
       case "pending":
-        return <Badge variant="outline">Em Análise</Badge>
+        return <Badge variant="warning">Em Análise</Badge>
     }
   }
 
