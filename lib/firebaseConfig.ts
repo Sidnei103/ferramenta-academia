@@ -1,22 +1,23 @@
-import { initializeApp, getApps } from "firebase/app"
+import { initializeApp, getApp, FirebaseApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
 import { getAuth } from "firebase/auth"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBWxC2TQ6VlPyC4HbMbhC9P_pc8nK57Soo",
-  authDomain: "contrata---academia-de-metas.firebaseapp.com",
-  projectId: "contrata---academia-de-metas",
-  storageBucket: "contrata---academia-de-metas.firebasestorage.app",
-  messagingSenderId: "356860262372",
-  appId: "1:356860262372:web:74a110f146a7b9df92b9f1",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 }
 
 // Initialize Firebase
-let app
-if (!getApps().length) {
+let app: FirebaseApp
+
+try {
+  app = getApp()
+} catch {
   app = initializeApp(firebaseConfig)
-} else {
-  app = getApps()[0]
 }
 
 const db = getFirestore(app)
