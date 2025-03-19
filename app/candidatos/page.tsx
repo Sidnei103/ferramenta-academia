@@ -32,7 +32,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { StorageService } from "@/services/storage"
 import { FixedSizeList } from 'react-window'
-import dynamic from 'next/dynamic'
 
 type Candidato = {
   id: string
@@ -85,150 +84,6 @@ const formatTimestamp = (timestamp: Candidato["createdAt"]) => {
   }
   return "Não registrada"
 }
-
-// Componente de fallback para quando não puder usar virtualização
-const SimpleCandidatesList = ({ candidates }) => {
-  return (
-    <div className="space-y-4">
-      {candidates.map((candidate) => (
-        <Card key={candidate.id} className="hover:shadow-lg transition-shadow duration-300">
-          <div className="flex justify-between items-center px-6 pt-6">
-            <div className="flex-1 cursor-pointer" onClick={() => toggleExpand(candidate.id)}>
-              <CardTitle className="flex items-center space-x-2">
-                <span>{candidate.nome}</span>
-                <Badge className="ml-2">{candidate.status}</Badge>
-              </CardTitle>
-            </div>
-            <div className="flex items-center space-x-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600"
-                    onClick={() => {
-                      const confirmed = window.confirm("Tem certeza que deseja excluir este candidato?")
-                      if (confirmed) {
-                        handleDeleteCandidate(candidate.id)
-                      }
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir candidato
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div className="cursor-pointer" onClick={() => toggleExpand(candidate.id)}>
-                {expandedCard === candidate.id ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
-                )}
-              </div>
-            </div>
-          </div>
-          <CardContent>
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="flex items-center">
-                <Mail className="mr-2 h-4 w-4 text-gray-500" />
-                <span>{candidate.email}</span>
-              </div>
-              <div className="flex items-center">
-                <Phone className="mr-2 h-4 w-4 text-gray-500" />
-                <span>{candidate.telefone}</span>
-              </div>
-              <div className="flex items-center">
-                <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                <span>Data da Entrevista: {formatTimestamp(candidate.createdAt)}</span>
-              </div>
-            </div>
-
-            {expandedCard === candidate.id && (
-              <div className="mt-4 space-y-4">
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">📋 Anotações sobre o candidato:</h4>
-                  <p className="text-gray-700">{formatData(candidate.candidato_anotacoes)}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">❓ Resumo das respostas:</h4>
-                  <p className="text-gray-700">{summarizeAnswers(candidate.perguntas_anotacoes)}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">🔍 Detalhes das respostas:</h4>
-                  {candidate.perguntas_anotacoes ? (
-                    <div className="space-y-4">
-                      {/* Perguntas padrão */}
-                      {Object.entries(candidate.perguntas_anotacoes)
-                        .filter(([key]) => key.startsWith("q"))
-                        .map(([key, value], index) => (
-                          <div key={key} className="mb-2">
-                            <p className="font-medium">Pergunta padrão {key.replace("q", "")}</p>
-                            <p className="text-gray-700">{value}</p>
-                          </div>
-                        ))}
-
-                      {/* Perguntas personalizadas */}
-                      {Object.entries(candidate.perguntas_anotacoes)
-                        .filter(([key]) => key.startsWith("custom_") || key.length > 20)
-                        .map(([key, value], index) => (
-                          <div key={key} className="mb-2">
-                            <p className="font-medium">Pergunta personalizada {index + 1}</p>
-                            <p className="text-gray-700">{value}</p>
-                          </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-700">Nenhuma resposta registrada.</p>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">🔐 Notas Internas:</h4>
-                  <p className="text-gray-700">{formatData(candidate.notas_internas)}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">🎭 Role Play:</h4>
-                  <p className="text-gray-700">
-                    <strong>Realizado:</strong> {formatData(candidate.role_play_realizado)}
-                  </p>
-                  {candidate.role_play_feedback && (
-                    <p className="text-gray-700">
-                      <strong>Feedback:</strong> {formatData(candidate.role_play_feedback)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-// Componente virtualizado com carregamento dinâmico
-const VirtualizedList = dynamic(
-  () => {
-    return import('react-window').then((mod) => {
-      const { FixedSizeList } = mod;
-      return ({ children, ...props }) => (
-        <FixedSizeList {...props}>
-          {children}
-        </FixedSizeList>
-      );
-    });
-  },
-  {
-    ssr: false, // Desabilita SSR para este componente
-    loading: () => <SimpleCandidatesList candidates={[]} />,
-  }
-);
 
 export default function Candidatos() {
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
@@ -285,6 +140,9 @@ export default function Candidatos() {
     // Limpar listener quando o componente for desmontado
     return () => unsubscribe()
   }, [router, auth])
+
+  // Rest of the component remains the same...
+  // (keeping all existing functions and JSX)
 
   const handleEditCandidate = (id: string) => {
     router.push(`/hiring-interview?edit=${id}`)
@@ -409,139 +267,133 @@ export default function Candidatos() {
           {candidatosFiltrados.length === 0 ? (
             <p className="text-center text-gray-500">Nenhum candidato encontrado.</p>
           ) : (
-            <div className="relative" style={{ height: '500px' }}>
-              {typeof window !== 'undefined' ? (
-                <VirtualizedList
-                  height={500}
-                  width="100%"
-                  itemCount={candidatosFiltrados.length}
-                  itemSize={80}
-                >
-                  {({ index, style }) => (
-                    <div style={style}>
-                      <Card key={candidatosFiltrados[index].id} className="hover:shadow-lg transition-shadow duration-300">
-                        <div className="flex justify-between items-center px-6 pt-6">
-                          <div className="flex-1 cursor-pointer" onClick={() => toggleExpand(candidatosFiltrados[index].id)}>
-                            <CardTitle className="flex items-center space-x-2">
-                              <span>{candidatosFiltrados[index].nome}</span>
-                              <Badge className="ml-2">{candidatosFiltrados[index].status}</Badge>
-                            </CardTitle>
+            <FixedSizeList
+              height={500}
+              width="100%"
+              itemCount={candidatosFiltrados.length}
+              itemSize={80}
+            >
+              {({ index, style }) => (
+                <div style={style}>
+                  <Card key={candidatosFiltrados[index].id} className="hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex justify-between items-center px-6 pt-6">
+                      <div className="flex-1 cursor-pointer" onClick={() => toggleExpand(candidatosFiltrados[index].id)}>
+                        <CardTitle className="flex items-center space-x-2">
+                          <span>{candidatosFiltrados[index].nome}</span>
+                          <Badge className="ml-2">{candidatosFiltrados[index].status}</Badge>
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => {
+                                const confirmed = window.confirm("Tem certeza que deseja excluir este candidato?")
+                                if (confirmed) {
+                                  handleDeleteCandidate(candidatosFiltrados[index].id)
+                                }
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir candidato
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <div className="cursor-pointer" onClick={() => toggleExpand(candidatosFiltrados[index].id)}>
+                          {expandedCard === candidatosFiltrados[index].id ? (
+                            <ChevronUp className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-500" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent>
+                      <div className="flex items-center space-x-4 mb-4">
+                        <div className="flex items-center">
+                          <Mail className="mr-2 h-4 w-4 text-gray-500" />
+                          <span>{candidatosFiltrados[index].email}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="mr-2 h-4 w-4 text-gray-500" />
+                          <span>{candidatosFiltrados[index].telefone}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4 text-gray-500" />
+                          <span>Data da Entrevista: {formatTimestamp(candidatosFiltrados[index].createdAt)}</span>
+                        </div>
+                      </div>
+
+                      {expandedCard === candidatosFiltrados[index].id && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <h4 className="font-semibold text-lg mb-2">📋 Anotações sobre o candidato:</h4>
+                            <p className="text-gray-700">{formatData(candidatosFiltrados[index].candidato_anotacoes)}</p>
                           </div>
-                          <div className="flex items-center space-x-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  className="text-red-600 focus:text-red-600"
-                                  onClick={() => {
-                                    const confirmed = window.confirm("Tem certeza que deseja excluir este candidato?")
-                                    if (confirmed) {
-                                      handleDeleteCandidate(candidatosFiltrados[index].id)
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Excluir candidato
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <div className="cursor-pointer" onClick={() => toggleExpand(candidatosFiltrados[index].id)}>
-                              {expandedCard === candidatosFiltrados[index].id ? (
-                                <ChevronUp className="h-5 w-5 text-gray-500" />
-                              ) : (
-                                <ChevronDown className="h-5 w-5 text-gray-500" />
-                              )}
-                            </div>
+
+                          <div>
+                            <h4 className="font-semibold text-lg mb-2">❓ Resumo das respostas:</h4>
+                            <p className="text-gray-700">{summarizeAnswers(candidatosFiltrados[index].perguntas_anotacoes)}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-lg mb-2">🔍 Detalhes das respostas:</h4>
+                            {candidatosFiltrados[index].perguntas_anotacoes ? (
+                              <div className="space-y-4">
+                                {/* Perguntas padrão */}
+                                {Object.entries(candidatosFiltrados[index].perguntas_anotacoes)
+                                  .filter(([key]) => key.startsWith("q"))
+                                  .map(([key, value], index) => (
+                                    <div key={key} className="mb-2">
+                                      <p className="font-medium">Pergunta padrão {key.replace("q", "")}</p>
+                                      <p className="text-gray-700">{value}</p>
+                                    </div>
+                                  ))}
+
+                                {/* Perguntas personalizadas */}
+                                {Object.entries(candidatosFiltrados[index].perguntas_anotacoes)
+                                  .filter(([key]) => key.startsWith("custom_") || key.length > 20)
+                                  .map(([key, value], index) => (
+                                    <div key={key} className="mb-2">
+                                      <p className="font-medium">Pergunta personalizada {index + 1}</p>
+                                      <p className="text-gray-700">{value}</p>
+                                    </div>
+                                  ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-700">Nenhuma resposta registrada.</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-lg mb-2">🔐 Notas Internas:</h4>
+                            <p className="text-gray-700">{formatData(candidatosFiltrados[index].notas_internas)}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-lg mb-2">🎭 Role Play:</h4>
+                            <p className="text-gray-700">
+                              <strong>Realizado:</strong> {formatData(candidatosFiltrados[index].role_play_realizado)}
+                            </p>
+                            {candidatosFiltrados[index].role_play_feedback && (
+                              <p className="text-gray-700">
+                                <strong>Feedback:</strong> {formatData(candidatosFiltrados[index].role_play_feedback)}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <CardContent>
-                          <div className="flex items-center space-x-4 mb-4">
-                            <div className="flex items-center">
-                              <Mail className="mr-2 h-4 w-4 text-gray-500" />
-                              <span>{candidatosFiltrados[index].email}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Phone className="mr-2 h-4 w-4 text-gray-500" />
-                              <span>{candidatosFiltrados[index].telefone}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                              <span>Data da Entrevista: {formatTimestamp(candidatosFiltrados[index].createdAt)}</span>
-                            </div>
-                          </div>
-
-                          {expandedCard === candidatosFiltrados[index].id && (
-                            <div className="mt-4 space-y-4">
-                              <div>
-                                <h4 className="font-semibold text-lg mb-2">📋 Anotações sobre o candidato:</h4>
-                                <p className="text-gray-700">{formatData(candidatosFiltrados[index].candidato_anotacoes)}</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-lg mb-2">❓ Resumo das respostas:</h4>
-                                <p className="text-gray-700">{summarizeAnswers(candidatosFiltrados[index].perguntas_anotacoes)}</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-lg mb-2">🔍 Detalhes das respostas:</h4>
-                                {candidatosFiltrados[index].perguntas_anotacoes ? (
-                                  <div className="space-y-4">
-                                    {/* Perguntas padrão */}
-                                    {Object.entries(candidatosFiltrados[index].perguntas_anotacoes)
-                                      .filter(([key]) => key.startsWith("q"))
-                                      .map(([key, value], index) => (
-                                        <div key={key} className="mb-2">
-                                          <p className="font-medium">Pergunta padrão {key.replace("q", "")}</p>
-                                          <p className="text-gray-700">{value}</p>
-                                        </div>
-                                      ))}
-
-                                    {/* Perguntas personalizadas */}
-                                    {Object.entries(candidatosFiltrados[index].perguntas_anotacoes)
-                                      .filter(([key]) => key.startsWith("custom_") || key.length > 20)
-                                      .map(([key, value], index) => (
-                                        <div key={key} className="mb-2">
-                                          <p className="font-medium">Pergunta personalizada {index + 1}</p>
-                                          <p className="text-gray-700">{value}</p>
-                                        </div>
-                                      ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-700">Nenhuma resposta registrada.</p>
-                                )}
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-lg mb-2">🔐 Notas Internas:</h4>
-                                <p className="text-gray-700">{formatData(candidatosFiltrados[index].notas_internas)}</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-lg mb-2">🎭 Role Play:</h4>
-                                <p className="text-gray-700">
-                                  <strong>Realizado:</strong> {formatData(candidatosFiltrados[index].role_play_realizado)}
-                                </p>
-                                {candidatosFiltrados[index].role_play_feedback && (
-                                  <p className="text-gray-700">
-                                    <strong>Feedback:</strong> {formatData(candidatosFiltrados[index].role_play_feedback)}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </VirtualizedList>
-              ) : (
-                <SimpleCandidatesList candidates={candidatosFiltrados} />
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               )}
-            </div>
+            </FixedSizeList>
           )}
         </div>
       </div>
