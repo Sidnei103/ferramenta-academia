@@ -38,12 +38,12 @@ type Candidato = {
   status: "Aprovado" | "Em Análise" | "Reprovado" | "pending"
   data_entrevista?: { seconds: number; nanoseconds: number } | string
   perguntas_anotacoes?: {
+    [key: string]: string | undefined
     q1?: string
     q2?: string
     q3?: string
     q4?: string
     q5?: string
-    [key: string]: string | undefined
   }
   candidato_anotacoes?: string
   notas_internas?: string
@@ -53,8 +53,8 @@ type Candidato = {
   updatedAt?: { seconds: number; nanoseconds: number }
 }
 
-// Adicione esta função de utilidade no início do arquivo, fora do componente principal
-function summarizeAnswers(perguntas_anotacoes: Record<string, string> | undefined): string {
+// Modifique a função summarizeAnswers para lidar corretamente com os tipos
+function summarizeAnswers(perguntas_anotacoes: Record<string, string | undefined> | undefined): string {
   if (!perguntas_anotacoes) return "Nenhuma resposta registrada."
 
   const respostas = Object.entries(perguntas_anotacoes)
@@ -62,7 +62,7 @@ function summarizeAnswers(perguntas_anotacoes: Record<string, string> | undefine
       ([key, value]) =>
         (key.startsWith("q") || key.startsWith("custom_") || key.length > 20) && value && value.trim() !== "",
     )
-    .map(([_, value]) => value)
+    .map(([_, value]) => value as string) // aqui fazemos type assertion pois já filtramos os undefined
 
   if (respostas.length === 0) return "Nenhuma resposta registrada."
 
