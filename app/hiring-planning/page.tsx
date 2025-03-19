@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Clipboard, Users, Megaphone, FileText, ChevronRight, ChevronLeft, Copy, Info, Check } from "lucide-react"
@@ -65,44 +65,6 @@ export default function HiringPlanning() {
 
   const { toast } = useToast()
 
-  useEffect(() => {
-    const savedData = localStorage.getItem('hiringPlanning')
-    if (savedData) {
-      const parsedData = JSON.parse(savedData)
-      setTasks(parsedData.tasks)
-      setJobDescription(parsedData.jobDescription)
-    } else {
-      localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
-    }
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
-    updateOverallProgress()
-  }, [tasks, jobDescription])
-
-  const updateOverallProgress = () => {
-    const completedTasks = Object.values(tasks).filter(Boolean).length
-    const isStageCompleted = completedTasks === planningTasks.length
-    
-    const savedProgress = localStorage.getItem('hiringProgress')
-    let stages = []
-    
-    if (savedProgress) {
-      stages = JSON.parse(savedProgress).stages || []
-    }
-    
-    if (isStageCompleted && !stages.includes("planning")) {
-      stages.push("planning")
-    } else if (!isStageCompleted && stages.includes("planning")) {
-      stages = stages.filter(stage => stage !== "planning")
-    }
-    
-    localStorage.setItem('hiringProgress', JSON.stringify({ stages }))
-  }
-
-  const [copiedExamples, setCopiedExamples] = useState<{ [key: string]: boolean }>({})
-
   const handleTaskToggle = (taskId: string) => {
     setTasks((prev) => ({ ...prev, [taskId]: !prev[taskId] }))
   }
@@ -121,6 +83,8 @@ export default function HiringPlanning() {
       description: "A descrição da vaga foi copiada para a área de transferência.",
     })
   }
+
+  const [copiedExamples, setCopiedExamples] = useState<{ [key: string]: boolean }>({})
 
   const handleCopyExample = (taskId: string, example: string) => {
     navigator.clipboard.writeText(example)
@@ -300,21 +264,15 @@ export default function HiringPlanning() {
             </div>
           </div>
 
-          {/* Botão de Finalizar */}
-          <button
-            onClick={() => {
-              localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
-              toast({
-                title: "Planejamento finalizado!",
-                description: "Seus dados foram salvos localmente."
-              })
-            }}
+          {/* Next Stage Button */}
+          <Link
+            href="/hiring-prospection"
             className="w-full font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center
-            bg-gradient-to-r from-[#ffb400] to-[#cc9000] text-white hover:from-[#cc9000] hover:to-[#ffb400] shadow-md hover:shadow-lg hover:shadow-[#ffb400]/20"
+          bg-gradient-to-r from-[#ffb400] to-[#cc9000] text-white hover:from-[#cc9000] hover:to-[#ffb400] shadow-md hover:shadow-lg hover:shadow-[#ffb400]/20"
           >
-            Finalizar
-            <Check className="ml-2" />
-          </button>
+            Avançar para Próxima Etapa
+            <ChevronRight className="ml-2 transition-transform duration-300 translate-x-1" />
+          </Link>
         </div>
       </div>
     </TooltipProvider>
