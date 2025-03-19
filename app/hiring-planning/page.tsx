@@ -8,8 +8,6 @@ import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
-import { db } from "@/lib/firebaseConfig"
 
 // Define the tasks for the planning stage
 const planningTasks = [
@@ -68,47 +66,39 @@ export default function HiringPlanning() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchData = async () => {
-      const docRef = doc(db, "hiringPlanning", "current")
-      const docSnap = await getDoc(docRef)
-
-      if (docSnap.exists()) {
-        setTasks(docSnap.data().tasks)
-        setJobDescription(docSnap.data().jobDescription)
-      } else {
-        await setDoc(docRef, { tasks, jobDescription })
-      }
+    const savedData = localStorage.getItem('hiringPlanning')
+    if (savedData) {
+      const parsedData = JSON.parse(savedData)
+      setTasks(parsedData.tasks)
+      setJobDescription(parsedData.jobDescription)
+    } else {
+      localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
     }
-
-    fetchData()
   }, [])
 
   useEffect(() => {
-    const updateFirestore = async () => {
-      const docRef = doc(db, "hiringPlanning", "current")
-      await updateDoc(docRef, { tasks, jobDescription })
-      updateOverallProgress()
-    }
-
-    updateFirestore()
+    localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
+    updateOverallProgress()
   }, [tasks, jobDescription])
 
-  const updateOverallProgress = async () => {
+  const updateOverallProgress = () => {
     const completedTasks = Object.values(tasks).filter(Boolean).length
     const isStageCompleted = completedTasks === planningTasks.length
-    const progressRef = doc(db, "hiringProgress", "current")
-    const progressSnap = await getDoc(progressRef)
-
-    if (progressSnap.exists()) {
-      const stages = progressSnap.data().stages
-      if (isStageCompleted && !stages.includes("planning")) {
-        await updateDoc(progressRef, { stages: arrayUnion("planning") })
-      } else if (!isStageCompleted && stages.includes("planning")) {
-        await updateDoc(progressRef, { stages: arrayRemove("planning") })
-      }
-    } else {
-      await setDoc(progressRef, { stages: isStageCompleted ? ["planning"] : [] })
+    
+    const savedProgress = localStorage.getItem('hiringProgress')
+    let stages = []
+    
+    if (savedProgress) {
+      stages = JSON.parse(savedProgress).stages || []
     }
+    
+    if (isStageCompleted && !stages.includes("planning")) {
+      stages.push("planning")
+    } else if (!isStageCompleted && stages.includes("planning")) {
+      stages = stages.filter(stage => stage !== "planning")
+    }
+    
+    localStorage.setItem('hiringProgress', JSON.stringify({ stages }))
   }
 
   const [copiedExamples, setCopiedExamples] = useState<{ [key: string]: boolean }>({})
@@ -310,15 +300,21 @@ export default function HiringPlanning() {
             </div>
           </div>
 
-          {/* Next Stage Button */}
-          <Link
-            href="/hiring-prospection"
+          {/* Botão de Finalizar */}
+          <button
+            onClick={() => {
+              localStorage.setItem('hiringPlanning', JSON.stringify({ tasks, jobDescription }))
+              toast({
+                title: "Planejamento finalizado!",
+                description: "Seus dados foram salvos localmente."
+              })
+            }}
             className="w-full font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center
-          bg-gradient-to-r from-[#ffb400] to-[#cc9000] text-white hover:from-[#cc9000] hover:to-[#ffb400] shadow-md hover:shadow-lg hover:shadow-[#ffb400]/20"
+            bg-gradient-to-r from-[#ffb400] to-[#cc9000] text-white hover:from-[#cc9000] hover:to-[#ffb400] shadow-md hover:shadow-lg hover:shadow-[#ffb400]/20"
           >
-            Avançar para Próxima Etapa
-            <ChevronRight className="ml-2 transition-transform duration-300 translate-x-1" />
-          </Link>
+            Finalizar
+            <Check className="ml-2" />
+          </button>
         </div>
       </div>
     </TooltipProvider>
